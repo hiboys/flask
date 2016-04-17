@@ -70,11 +70,15 @@ class Flask(_PackageBoundObject):
     object.  It is passed the name of the module or package of the
     application.  Once it is created it will act as a central registry for
     the view functions, the URL rules, template configuration and much more.
+    flask对象实现了WSGI协议的application接口，作为flask框架的核心对象。通常利用
+    模块或者包的名字作为参数类构造flask对象。一旦构造成功了。这个flask对象，可以在
+    它身上进行很多重要的操作，如注册视图函数，URL规则，模板配置等等。
 
     The name of the package is used to resolve resources from inside the
     package or the folder the module is contained in depending on if the
     package parameter resolves to an actual python package (a folder with
     an :file:`__init__.py` file inside) or a standard module (just a ``.py`` file).
+    为什么要用包的名字来构造flask对象？实际是为了方便包内资源的加载。
 
     For more information about resource loading, see :func:`open_resource`.
 
@@ -95,6 +99,8 @@ class Flask(_PackageBoundObject):
         module, `__name__` is always the correct value.  If you however are
         using a package, it's usually recommended to hardcode the name of
         your package there.
+        如果是单个模块的话，__name__可以作为Flask对象构造的第一个参数，如果
+        使用的是包，通常建议硬编码包的名字，作为Flask对象的第一个参数。
 
         For example if your application is defined in :file:`yourapplication/app.py`
         you should create it with one of the two versions below::
@@ -127,21 +133,35 @@ class Flask(_PackageBoundObject):
     :param static_url_path: can be used to specify a different path for the
                             static files on the web.  Defaults to the name
                             of the `static_folder` folder.
+                            静态url路径，默认和static_folder目录名字一样。
+
     :param static_folder: the folder with static files that should be served
                           at `static_url_path`.  Defaults to the ``'static'``
                           folder in the root path of the application.
+                          静态资源目录。默认是web app根目录下的static目录。
+
     :param template_folder: the folder that contains the templates that should
                             be used by the application.  Defaults to
                             ``'templates'`` folder in the root path of the
                             application.
+                            模板目录。默认是根目录下的templates目录。
+
     :param instance_path: An alternative instance path for the application.
                           By default the folder ``'instance'`` next to the
                           package or module is assumed to be the instance
                           path.
+                          实例路径??暂时不懂是作什么用。只知道是一个目录，这个目录
+                          和包或者模块的根目录并列。默认的名字是'instance'。实例路径必须是一个
+                          绝对路径。
+
     :param instance_relative_config: if set to ``True`` relative filenames
                                      for loading the config are assumed to
                                      be relative to the instance path instead
                                      of the application root.
+                                     配置文件是否相对于实例路径。如果设置为True的话，
+                                     那么配置文件加载时，是相对于instance_path,而不是
+                                     web app的根路径。
+
     :param root_path: Flask by default will automatically calculate the path
                       to the root of the application.  In certain situations
                       this cannot be achieved (for instance if the package
@@ -151,10 +171,12 @@ class Flask(_PackageBoundObject):
 
     #: The class that is used for request objects.  See :class:`~flask.Request`
     #: for more information.
+    #请求类的名称，这意味着会在这个类中构造请求对象
     request_class = Request
 
     #: The class that is used for response objects.  See
     #: :class:`~flask.Response` for more information.
+    #响应类的名称，这意味着将会在这个类中构造response对象
     response_class = Response
 
     #: The class that is used for the Jinja environment.
@@ -176,6 +198,7 @@ class Flask(_PackageBoundObject):
     #: flask.g object is now application context scoped.
     #:
     #: .. versionadded:: 0.10
+    #应用上下文的g对象，可以存储任意的属性。
     app_ctx_globals_class = _AppCtxGlobals
 
     # Backwards compatibility support
@@ -197,6 +220,7 @@ class Flask(_PackageBoundObject):
     #:
     #: 1. Default values for certain config options.
     #: 2. Access to config values through attributes in addition to keys.
+    #：     访问可以通过属性类访问配置的值，而不是通过键的形式。
     #:
     #: .. versionadded:: 1.0
     config_class = Config
@@ -205,6 +229,8 @@ class Flask(_PackageBoundObject):
     #: application.  In debug mode the debugger will kick in when an unhandled
     #: exception occurs and the integrated server will automatically reload
     #: the application if changes in the code are detected.
+    #：调试debug标记设置。如果设置为True表明web app处于debug模式。当发生了未处理的
+    #:  异常时将会自动触发debugger。如果检查到代码改变了，会自动重新加载代码。  
     #:
     #: This attribute can also be configured from the config with the ``DEBUG``
     #: configuration key.  Defaults to ``False``.
@@ -220,6 +246,7 @@ class Flask(_PackageBoundObject):
     #:
     #: This attribute can also be configured from the config with the
     #: ``TESTING`` configuration key.  Defaults to ``False``.
+    #: 单元测试用到，是否处于测试模式。
     testing = ConfigAttribute('TESTING')
 
     #: If a secret key is set, cryptographic components can use this to
@@ -243,6 +270,7 @@ class Flask(_PackageBoundObject):
     #: This attribute can also be configured from the config with the
     #: ``PERMANENT_SESSION_LIFETIME`` configuration key.  Defaults to
     #: ``timedelta(days=31)``
+    #: 持久session
     permanent_session_lifetime = ConfigAttribute('PERMANENT_SESSION_LIFETIME',
         get_converter=_make_timedelta)
 
@@ -253,6 +281,7 @@ class Flask(_PackageBoundObject):
     #: ``SEND_FILE_MAX_AGE_DEFAULT`` configuration key. This configuration
     #: variable can also be set with an integer value used as seconds.
     #: Defaults to ``timedelta(hours=12)``
+    #:  发送文件，缓存超时时间。
     send_file_max_age_default = ConfigAttribute('SEND_FILE_MAX_AGE_DEFAULT',
         get_converter=_make_timedelta)
 
@@ -264,6 +293,7 @@ class Flask(_PackageBoundObject):
     #:
     #: This attribute can also be configured from the config with the
     #: ``USE_X_SENDFILE`` configuration key.  Defaults to ``False``.
+    #:  X-Sendfile这是什么？有带探究。
     use_x_sendfile = ConfigAttribute('USE_X_SENDFILE')
 
     #: The name of the logger to use.  By default the logger name is the
@@ -288,6 +318,7 @@ class Flask(_PackageBoundObject):
     )
 
     #: Default configuration parameters.
+    #:  默认的配置参数
     default_config = ImmutableDict({
         'DEBUG':                                False,
         'TESTING':                              False,
@@ -323,6 +354,7 @@ class Flask(_PackageBoundObject):
     #: :meth:`add_url_rule`.  Defaults to :class:`werkzeug.routing.Rule`.
     #:
     #: .. versionadded:: 0.7
+    #: 路由规则类
     url_rule_class = Rule
 
     #: the test client that is used with when `test_client` is used.
@@ -367,6 +399,7 @@ class Flask(_PackageBoundObject):
         #: The configuration dictionary as :class:`Config`.  This behaves
         #: exactly like a regular dictionary but supports additional methods
         #: to load a config from files.
+        #: 一个配置字典，支持从文件中加载配置
         self.config = self.make_config(instance_relative_config)
 
         # Prepare the deferred setup of the logger.
@@ -377,6 +410,8 @@ class Flask(_PackageBoundObject):
         #: be function names which are also used to generate URLs and
         #: the values are the function objects themselves.
         #: To register a view function, use the :meth:`route` decorator.
+        #: 视图函数字典，key是函数的名称，value是函数对象。
+        #:  key可以用来生成url。但是通常注册视图函数，使用route函数装饰器。
         self.view_functions = {}
 
         # support for the now deprecated `error_handlers` attribute.  The
@@ -393,6 +428,8 @@ class Flask(_PackageBoundObject):
         #:
         #: To register a error handler, use the :meth:`errorhandler`
         #: decorator.
+        #: 错误处理Handler，不同的http error，可以个性化定制错误处理页面。
+        #: 可以使用errorhandler来注册error处理的Handler。
         self.error_handler_spec = {None: self._error_handlers}
 
         #: A list of functions that are called when :meth:`url_for` raises a
@@ -402,6 +439,7 @@ class Flask(_PackageBoundObject):
         #: tried.
         #:
         #: .. versionadded:: 0.9
+        #: url处理相关，BuildError是什么？有待了解。
         self.url_build_error_handlers = []
 
         #: A dictionary with lists of functions that should be called at the
@@ -410,6 +448,8 @@ class Flask(_PackageBoundObject):
         #: This can for example be used to open database connections or
         #: getting hold of the currently logged in user.  To register a
         #: function here, use the :meth:`before_request` decorator.
+        #:在一个请求开始处理前，这个字典中的注册的函数将会被调用。通常使用
+        #: before_request函数装饰器来注册这样的函数。
         self.before_request_funcs = {}
 
         #: A lists of functions that should be called at the beginning of the
@@ -417,6 +457,7 @@ class Flask(_PackageBoundObject):
         #: the :meth:`before_first_request` decorator.
         #:
         #: .. versionadded:: 0.8
+        #: 开始处理第一个请求前要做的事情
         self.before_first_request_funcs = []
 
         #: A dictionary with lists of functions that should be called after
@@ -424,6 +465,7 @@ class Flask(_PackageBoundObject):
         #: this function is active for, ``None`` for all requests.  This can for
         #: example be used to close database connections. To register a function
         #: here, use the :meth:`after_request` decorator.
+        #: 每个请求处理完后，要做的事情。也可以通过after_request函数装饰器注册
         self.after_request_funcs = {}
 
         #: A dictionary with lists of functions that are called after
@@ -436,6 +478,10 @@ class Flask(_PackageBoundObject):
         #: :meth:`teardown_request` decorator.
         #:
         #: .. versionadded:: 0.7
+        #: 每个请求处理后将要调用的函数，即使在请求处理过程中发生了异常，这个
+        #: 字典中注册的函数都会调用。这里注册的函数，不允许修改request对象，返回值也会
+        #: 被忽略，如果处理请求的过程中发生了异常，异常将会传递到每一个
+        #: teardown_request函数。
         self.teardown_request_funcs = {}
 
         #: A list of functions that are called when the application context
@@ -474,6 +520,7 @@ class Flask(_PackageBoundObject):
         #: requests.  Each returns a dictionary that the template context is
         #: updated with.  To register a function here, use the
         #: :meth:`context_processor` decorator.
+        #: 填充模板上下文的处理函数
         self.template_context_processors = {
             None: [_default_template_ctx_processor]
         }
@@ -506,6 +553,7 @@ class Flask(_PackageBoundObject):
         #: ``'foo'``.
         #:
         #: .. versionadded:: 0.7
+        #: 插件注册的地方
         self.extensions = {}
 
         #: The :class:`~werkzeug.routing.Map` for this instance.  You can use
@@ -613,9 +661,11 @@ class Flask(_PackageBoundObject):
             app.logger.error('An error occurred')
 
         .. versionadded:: 0.3
+        log对象，默认输出到命令行stderr
         """
         if self._logger and self._logger.name == self.logger_name:
             return self._logger
+        #double check
         with _logger_lock:
             if self._logger and self._logger.name == self.logger_name:
                 return self._logger
@@ -645,6 +695,7 @@ class Flask(_PackageBoundObject):
         of the application.
 
         .. versionadded:: 0.8
+        加载配置文件,会在Flask类的构造函数中被调用
         """
         root_path = self.root_path
         if instance_relative:
@@ -673,6 +724,7 @@ class Flask(_PackageBoundObject):
         :param resource: the name of the resource.  To access resources within
                          subfolders use forward slashes as separator.
         :param mode: resource file opening mode, default is 'rb'.
+        打开instance目录下的资源文件
         """
         return open(os.path.join(self.instance_path, resource), mode)
 
@@ -686,6 +738,11 @@ class Flask(_PackageBoundObject):
         .. versionchanged:: 1.0
            ``Environment.auto_reload`` set in accordance with
            ``TEMPLATES_AUTO_RELOAD`` configuration option.
+        创建jinja模板的运行环境，根据一些自定义的配置：
+        如:
+            模板是否自动加载：可以在jinja_options中设置，
+            如果没有设置的，那么看配置文件中是否有TEMPLATES_AUTO_RELOAD
+            如果配置文件中也没有设置，那么是debug模式的话，模板就自动加载
         """
         options = dict(self.jinja_options)
         if 'autoescape' not in options:
@@ -696,6 +753,9 @@ class Flask(_PackageBoundObject):
             else:
                 options['auto_reload'] = self.debug
         rv = self.jinja_environment(self, **options)
+
+        #从这里可以看到jinja模板中默认可以使用url_for, config, request, session
+        #g对象
         rv.globals.update(
             url_for=url_for,
             get_flashed_messages=get_flashed_messages,
@@ -754,8 +814,10 @@ class Flask(_PackageBoundObject):
                         to add extra variables.
         """
         funcs = self.template_context_processors[None]
+        # _request_ctx_stack的作用是什么，有待探究??
         reqctx = _request_ctx_stack.top
         if reqctx is not None:
+            #一个Request对象中含有blueprint对象的引用
             bp = reqctx.request.blueprint
             if bp is not None and bp in self.template_context_processors:
                 funcs = chain(funcs, self.template_context_processors[bp])
@@ -781,6 +843,7 @@ class Flask(_PackageBoundObject):
 
     def run(self, host=None, port=None, debug=None, **options):
         """Runs the application on a local development server.
+        此函数只是在开发环境中，不能用在生产线上
 
         Do not use ``run()`` in a production setting. It is not intended to
         meet security and performance requirements for a production server.
@@ -788,6 +851,7 @@ class Flask(_PackageBoundObject):
 
         If the :attr:`debug` flag is set the server will automatically reload
         for code changes and show a debugger in case an exception happened.
+        debug模式设置参数
 
         If you want to run the application in debug mode, but disable the
         code execution on the interactive debugger, you can pass
@@ -797,6 +861,8 @@ class Flask(_PackageBoundObject):
         It is not recommended to use this function for development with
         automatic reloading as this is badly supported.  Instead you should
         be using the :command:`flask` command line script's ``run`` support.
+        如果想要用flask的自动加载代码功能，应该使用flask的命令行脚步run支持
+        这种功能
 
         .. admonition:: Keep in Mind
 
@@ -849,6 +915,7 @@ class Flask(_PackageBoundObject):
     def test_client(self, use_cookies=True, **kwargs):
         """Creates a test client for this application.  For information
         about unit testing head over to :ref:`testing`.
+        测试client
 
         Note that if you are testing for assertions or exceptions in your
         application code, you must set ``app.testing = True`` in order for the
@@ -857,6 +924,8 @@ class Flask(_PackageBoundObject):
         the only indication of an AssertionError or other exception will be a
         500 status code response to the test client.  See the :attr:`testing`
         attribute.  For example::
+        只有设置了app.testing，web 应用的异常才在test client中可见，否则会
+        被web app直接处理掉
 
             app.testing = True
             client = app.test_client()
@@ -871,6 +940,7 @@ class Flask(_PackageBoundObject):
 
         Additionally, you may pass optional keyword arguments that will then
         be passed to the application's :attr:`test_client_class` constructor.
+        可以子类实例化test client
         For example::
 
             from flask.testing import FlaskClient
@@ -907,7 +977,8 @@ class Flask(_PackageBoundObject):
         session data in a signed cookie.  This requires that the
         :attr:`secret_key` is set.  Instead of overriding this method
         we recommend replacing the :class:`session_interface`.
-
+        默认实现是，所有的session数据都存储在signed cookie中，
+        作者推荐取代session_interface类，自定义session存储接口
         :param request: an instance of :attr:`request_class`.
         """
         return self.session_interface.open_session(self, request)
@@ -963,6 +1034,8 @@ class Flask(_PackageBoundObject):
         """Connects a URL rule.  Works exactly like the :meth:`route`
         decorator.  If a view_func is provided it will be registered with the
         endpoint.
+        注册url路由规则，等同于通过app.route函数装饰器, 这里的endpoint指的是
+        路由规则名称，就像django路由规则也有一个name参数
 
         Basically this example::
 
@@ -1007,8 +1080,10 @@ class Flask(_PackageBoundObject):
                         just listens for ``GET`` (and implicitly ``HEAD``).
                         Starting with Flask 0.6, ``OPTIONS`` is implicitly
                         added and handled by the standard request handling.
+                        路由规则配置属性
         """
         if endpoint is None:
+            #如果没有提供endpoint，那么将视图函数的名称作为endpoint
             endpoint = _endpoint_from_view_func(view_func)
         options['endpoint'] = endpoint
         methods = options.pop('methods', None)
@@ -1016,6 +1091,8 @@ class Flask(_PackageBoundObject):
         # if the methods are not given and the view_func object knows its
         # methods we can use that instead.  If neither exists, we go with
         # a tuple of only ``GET`` as default.
+        # 如果options中没有methods设置，那么看视图函数中是否由methods属性，
+        # 如果都没有的话，那么默认是GET方法
         if methods is None:
             methods = getattr(view_func, 'methods', None) or ('GET',)
         if isinstance(methods, string_types):
@@ -1044,6 +1121,7 @@ class Flask(_PackageBoundObject):
         rule = self.url_rule_class(rule, methods=methods, **options)
         rule.provide_automatic_options = provide_automatic_options
 
+        #所有的路由规则，最后都添加到了self.url_map中
         self.url_map.add(rule)
         if view_func is not None:
             old_func = self.view_functions.get(endpoint)
@@ -1092,6 +1170,7 @@ class Flask(_PackageBoundObject):
                 return "example"
 
         :param endpoint: the name of the endpoint
+        这个暂时不太理解？？
         """
         def decorator(f):
             self.view_functions[endpoint] = f
@@ -1101,6 +1180,10 @@ class Flask(_PackageBoundObject):
     @staticmethod
     def _get_exc_class_and_code(exc_class_or_code):
         """Ensure that we register only exceptions as handler keys"""
+        #参数可能是一个异常类，也可能是一个HTTP error code
+        #如果是error code，映射到default exceptions
+        #每个ERROR code，其实对应一个HTTPException
+        #在web框架中，客户端看到ERROR code，其实是web app抛出了指定的HTTPException
         if isinstance(exc_class_or_code, integer_types):
             exc_class = default_exceptions[exc_class_or_code]
         else:
@@ -1117,6 +1200,7 @@ class Flask(_PackageBoundObject):
     def errorhandler(self, code_or_exception):
         """A decorator that is used to register a function give a given
         error code.  Example::
+        注册handler处理指定的http error code或者任意的异常Exception
 
             @app.errorhandler(404)
             def page_not_found(error):
@@ -1199,6 +1283,7 @@ class Flask(_PackageBoundObject):
 
         :param name: the optional name of the filter, otherwise the
                      function name will be used.
+        模板过滤器注册函数装饰器,最终注册到jinja环境变量中
         """
         def decorator(f):
             self.add_template_filter(f, name=name)
@@ -1234,6 +1319,8 @@ class Flask(_PackageBoundObject):
 
         :param name: the optional name of the test, otherwise the
                      function name will be used.
+        template test倒是一个新的概念
+        http://jinja.pocoo.org/docs/dev/templates/中可以到其用法
         """
         def decorator(f):
             self.add_template_test(f, name=name)
@@ -1266,6 +1353,8 @@ class Flask(_PackageBoundObject):
 
         :param name: the optional name of the global function, otherwise the
                      function name will be used.
+        template global function 注册，是在所有的模板文件中都可以使用的函数，
+        也就是公共函数
         """
         def decorator(f):
             self.add_template_global(f, name=name)
@@ -1292,6 +1381,10 @@ class Flask(_PackageBoundObject):
         If the function returns a non-None value, it's handled as
         if it was the return value from the view and further
         request handling is stopped.
+
+        注册一个函数，这个函数会在每一个请求被处理前运行，
+        如果这个函数返回非空值，那么这个函数的返回值将会作为视图函数的返回结果，
+        进一步的请求处理将不会再执行，tornado中也有相似的设计
         """
         self.before_request_funcs.setdefault(None, []).append(f)
         return f
@@ -1319,6 +1412,9 @@ class Flask(_PackageBoundObject):
 
         As of Flask 0.7 this function might not be executed at the end of the
         request in case an unhandled exception occurred.
+        注册一个函数，这个函数将会在每一个请求被处理后，执行，
+        函数接收一个reponse_class实例的参数，返回一个新的response对象或者同样的对象，
+        当有Request处理过程抛出了异常，这些函数有可能不会执行到
         """
         self.after_request_funcs.setdefault(None, []).append(f)
         return f
@@ -1329,6 +1425,7 @@ class Flask(_PackageBoundObject):
         regardless of whether there was an exception or not.  These functions
         are executed when the request context is popped, even if not an
         actual request was performed.
+        注意这和上面after_request的不同
 
         Example::
 
