@@ -1565,6 +1565,7 @@ class Flask(_PackageBoundObject):
         """Handles an HTTP exception.  By default this will invoke the
         registered error handlers and fall back to returning the
         exception as response.
+        处理HTTPException
 
         .. versionadded:: 0.3
         """
@@ -1589,6 +1590,10 @@ class Flask(_PackageBoundObject):
         exception is not called and it shows up as regular exception in the
         traceback.  This is helpful for debugging implicitly raised HTTP
         exceptions.
+
+        Trap HTTPException, 是否应该由定义的Exception handler 去处理HTTPException
+        主要应用在debug模式，其中涉及到两个配置 TRAP_HTTP_EXCEPTIONS
+        和trap_bad_request_errors
 
         .. versionadded:: 0.8
         """
@@ -1633,6 +1638,7 @@ class Flask(_PackageBoundObject):
         exists, a default 500 internal server error message is displayed.
 
         .. versionadded:: 0.3
+        当异常没有被catch的时候，这个函数会被调用
         """
         exc_type, exc_value, tb = sys.exc_info()
 
@@ -1661,6 +1667,7 @@ class Flask(_PackageBoundObject):
         :attr:`logger`.
 
         .. versionadded:: 0.8
+        log 异常，请求路径，请求方法，异常信息
         """
         self.logger.error('Exception on %s [%s]' % (
             request.path,
@@ -1709,6 +1716,7 @@ class Flask(_PackageBoundObject):
         """Dispatches the request and on top of that performs request
         pre and postprocessing as well as HTTP exception catching and
         error handling.
+        这里囊括了http 请求处理的整个流程
 
         .. versionadded:: 0.7
         """
@@ -1731,6 +1739,7 @@ class Flask(_PackageBoundObject):
         application instance (which means process usually).
 
         :internal:
+        触发第一个请求前的处理
         """
         if self._got_first_request:
             return
@@ -1777,6 +1786,9 @@ class Flask(_PackageBoundObject):
     def make_response(self, rv):
         """Converts the return value from a view function to a real
         response object that is an instance of :attr:`response_class`.
+        将试图函数的返回值转换成一个真正的response对象实例。
+        当然rv参数，必须是指定的类型：
+        五种类型
 
         The following types are allowed for `rv`:
 
@@ -1809,6 +1821,7 @@ class Flask(_PackageBoundObject):
             rv, status_or_headers, headers = rv + (None,) * (3 - len(rv))
 
         if rv is None:
+            #视图函数必须有一个返回值
             raise ValueError('View function did not return a response')
 
         if isinstance(status_or_headers, (dict, list)):
@@ -1832,6 +1845,7 @@ class Flask(_PackageBoundObject):
             else:
                 rv.status_code = status_or_headers
         if headers:
+            #response对象有headers属性字段，表明返回给客户端的header
             rv.headers.extend(headers)
 
         return rv
@@ -1846,8 +1860,10 @@ class Flask(_PackageBoundObject):
         .. versionchanged:: 0.9
            This can now also be called without a request object when the
            URL adapter is created for the application context.
+        url_adapter具体指的是什么东西？？
         """
         if request is not None:
+            #每一个request对象有environ参数，具体是做什么用的？？
             return self.url_map.bind_to_environ(request.environ,
                 server_name=self.config['SERVER_NAME'])
         # We need at the very least the server name to be set for this
@@ -1862,7 +1878,7 @@ class Flask(_PackageBoundObject):
         """Injects the URL defaults for the given endpoint directly into
         the values dictionary passed.  This is used internally and
         automatically called on URL building.
-
+        ??这个也不懂
         .. versionadded:: 0.7
         """
         funcs = self.url_default_functions.get(None, ())
@@ -1874,6 +1890,7 @@ class Flask(_PackageBoundObject):
 
     def handle_url_build_error(self, error, endpoint, values):
         """Handle :class:`~werkzeug.routing.BuildError` on :meth:`url_for`.
+        url build究竟是一个怎样的过程？？
         """
         exc_type, exc_value, tb = sys.exc_info()
         for handler in self.url_build_error_handlers:
@@ -1902,6 +1919,7 @@ class Flask(_PackageBoundObject):
 
         This also triggers the :meth:`url_value_processor` functions before
         the actual :meth:`before_request` functions are called.
+        url value processor在这里究竟是什么作用？？也会在这里被调用到
         """
         bp = _request_ctx_stack.top.request.blueprint
 
@@ -1942,6 +1960,7 @@ class Flask(_PackageBoundObject):
         for handler in funcs:
             response = handler(response)
         if not self.session_interface.is_null_session(ctx.session):
+            #这里也做了一个save session的操作
             self.save_session(ctx.session, response)
         return response
 
@@ -1991,6 +2010,7 @@ class Flask(_PackageBoundObject):
                 ...
 
         .. versionadded:: 0.9
+        app 上下文
         """
         return AppContext(self)
 
