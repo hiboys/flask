@@ -43,6 +43,7 @@ class Config(dict):
     config.
 
     Either you can fill the config from a config file::
+    从py文件中导入配置属性
 
         app.config.from_pyfile('yourconfig.cfg')
 
@@ -61,11 +62,13 @@ class Config(dict):
     lowercase values in the config file for temporary values that are not added
     to the config or to define the config keys in the same file that implements
     the application.
+    无论是从python 文件中或者从模块中加载配置，只有字母大写的键才会加入到config中。
 
     Probably the most interesting way to load configurations is from an
     environment variable pointing to a file::
 
         app.config.from_envvar('YOURAPPLICATION_SETTINGS')
+    也可以从环境变量中加载，这个环境变量应该指向一个配置文件
 
     In this case before launching the application you have to set this
     environment variable to the file you want to use.  On Linux and OS X
@@ -127,6 +130,7 @@ class Config(dict):
         d.__file__ = filename
         try:
             with open(filename) as config_file:
+                #这里挺有趣的，利用了python的compile函数，将配置文件的执行结果保存到了d对象中
                 exec(compile(config_file.read(), filename, 'exec'), d.__dict__)
         except IOError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
@@ -163,6 +167,7 @@ class Config(dict):
             obj = import_string(obj)
         for key in dir(obj):
             if key.isupper():
+                #注意这里，只有全部大写的key才会加入到配置文件中
                 self[key] = getattr(obj, key)
 
     def from_json(self, filename, silent=False):
@@ -177,6 +182,7 @@ class Config(dict):
                        files.
 
         .. versionadded:: 1.0
+        从json文件中加载配置
         """
         filename = os.path.join(self.root_path, filename)
 
@@ -215,6 +221,7 @@ class Config(dict):
 
     def get_namespace(self, namespace, lowercase=True, trim_namespace=True):
         """Returns a dictionary containing a subset of configuration options
+        配置文件也有namespace的概念
         that match the specified namespace/prefix. Example usage::
 
             app.config['IMAGE_STORE_TYPE'] = 'fs'
