@@ -84,6 +84,7 @@ class Blueprint(_PackageBoundObject):
     information.
 
     .. versionadded:: 0.7
+    一个Blueprint对象，实际类似一个Flask application对象，但是它并不是一个application
     """
 
     warn_on_modifications = False
@@ -97,6 +98,7 @@ class Blueprint(_PackageBoundObject):
                                      root_path=root_path)
         self.name = name
         self.url_prefix = url_prefix
+        #子域名
         self.subdomain = subdomain
         self.static_folder = static_folder
         self.static_url_path = static_url_path
@@ -110,6 +112,7 @@ class Blueprint(_PackageBoundObject):
         registered on the application.  This function is called with the
         state as argument as returned by the :meth:`make_setup_state`
         method.
+        注册一个函数，这个函数将会在blueprint注册到application时候被调用
         """
         if self._got_registered_once and self.warn_on_modifications:
             from warnings import warn
@@ -133,6 +136,7 @@ class Blueprint(_PackageBoundObject):
         """Creates an instance of :meth:`~flask.blueprints.BlueprintSetupState`
         object that is later passed to the register callback functions.
         Subclasses can override this to return a subclass of the setup state.
+        有必要了解这个setup state指的是什么对象
         """
         return BlueprintSetupState(self, app, options, first_registration)
 
@@ -146,6 +150,7 @@ class Blueprint(_PackageBoundObject):
         self._got_registered_once = True
         state = self.make_setup_state(app, options, first_registration)
         if self.has_static_folder:
+            #这里static url规则，是根据是否有静态目录，自动添加的
             state.add_url_rule(self.static_url_path + '/<path:filename>',
                                view_func=self.send_static_file,
                                endpoint='static')
@@ -156,6 +161,7 @@ class Blueprint(_PackageBoundObject):
     def route(self, rule, **options):
         """Like :meth:`Flask.route` but for a blueprint.  The endpoint for the
         :func:`url_for` function is prefixed with the name of the blueprint.
+        这里url rule的endpoint会自动加前缀是blueprint的name
         """
         def decorator(f):
             endpoint = options.pop("endpoint", f.__name__)
@@ -169,6 +175,8 @@ class Blueprint(_PackageBoundObject):
         """
         if endpoint:
             assert '.' not in endpoint, "Blueprint endpoints should not contain dots"
+        #注意这里使用的self.record,也就是说add_url_rule是在blueprint被注册到application时候才
+        #会真正添加
         self.record(lambda s:
             s.add_url_rule(rule, endpoint, view_func, **options))
 
