@@ -39,6 +39,7 @@ class _AppCtxGlobals(object):
         return self.__dict__.setdefault(name, default)
 
     def __contains__(self, item):
+        """in 语句背后所调用的方法"""
         return item in self.__dict__
 
     def __iter__(self):
@@ -55,6 +56,9 @@ def after_this_request(f):
     """Executes a function after this request.  This is useful to modify
     response objects.  The function is passed the response object and has
     to return the same or a new one.
+    通过函数装饰器设置，当请求处理完后，得到一个response对象，
+    这个函数装饰器所修饰的方法将会修改response对象。
+    实际取到了请求上下文的栈顶对象，
 
     Example::
 
@@ -163,16 +167,20 @@ class AppContext(object):
     """
 
     def __init__(self, app):
+        """应用上下文的构造函数参数是app"""
         self.app = app
         self.url_adapter = app.create_url_adapter(None)
+        #然后也含有一个g对象
         self.g = app.app_ctx_globals_class()
 
         # Like request context, app contexts can be pushed multiple times
         # but there a basic "refcount" is enough to track them.
+        # 应用上下文可以重复push进入堆栈
         self._refcnt = 0
 
     def push(self):
         """Binds the app context to the current context."""
+        #每次进堆栈时，引用次数加1
         self._refcnt += 1
         if hasattr(sys, 'exc_clear'):
             sys.exc_clear()
@@ -208,9 +216,12 @@ class RequestContext(object):
     `_request_ctx_stack` and removed at the end of it.  It will create the
     URL adapter and request object for the WSGI environment provided.
 
+    请求上下文，会含有url 适配器对象和请求对象
+
     Do not attempt to use this class directly, instead use
     :meth:`~flask.Flask.test_request_context` and
     :meth:`~flask.Flask.request_context` to create this object.
+    不建议直接使用这个类，最后通过Flask.request_context来使用
 
     When the request context is popped, it will evaluate all the
     functions registered on the application for teardown execution
