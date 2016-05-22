@@ -51,6 +51,9 @@ def test_options_on_multiple_rules():
 
 
 def test_options_handling_disabled():
+    '''
+    注意这里禁用option方法，使用了handler函数的provide_automatic_options
+    '''
     app = flask.Flask(__name__)
 
     def index():
@@ -186,6 +189,9 @@ def test_endpoint_decorator():
 
 
 def test_session():
+    '''
+    session其实是一个线程局部变量,用法比较特殊
+    '''
     app = flask.Flask(__name__)
     app.secret_key = 'testkey'
 
@@ -204,6 +210,9 @@ def test_session():
 
 
 def test_session_using_server_name():
+    '''
+    这个暂时不太理解
+    '''
     app = flask.Flask(__name__)
     app.config.update(
         SECRET_KEY='foo',
@@ -280,6 +289,9 @@ def test_session_using_application_root():
 
 
 def test_session_using_session_settings():
+    '''
+    session全局配置
+    '''
     app = flask.Flask(__name__)
     app.config.update(
         SECRET_KEY='foo',
